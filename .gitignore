@@ -83,3 +83,8 @@ pixel_mapping_from_simtel.csv
 testtable.h5
 ctapipe.sif
 gamma_diffuse_run1.dl1.h5
+corsika_run1.npe.csv
+corsika_run1.npe.h5
+corsika_run1.npe.pkl
+corsika_run1.simtel.gz
+gamma_run1.dl1.h5

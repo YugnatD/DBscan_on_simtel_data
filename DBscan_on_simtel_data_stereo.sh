@@ -18,11 +18,11 @@ then
 else
     if [ "$1" = "-d" ]; then
  	#
-	dataOIdirPreff="../scratch/simtel_data/gamma_st/"
-	dataOI_npe_dirPreff="../scratch/simtel_data/gamma_st/npe/"
+	dataOIdirPreff="scratch/simtel_data/gamma_st/"
+	dataOI_npe_dirPreff="scratch/simtel_data/gamma_st/npe/"
 	#
-	#dataOIdirPreff="../scratch/simtel_data/proton_st/"
-	#dataOI_npe_dirPreff="../scratch/simtel_data/proton_st/npe/"
+	#dataOIdirPreff="scratch/simtel_data/proton_st/"
+	#dataOI_npe_dirPreff="scratch/simtel_data/proton_st/npe/"
 	#
 	mkdir -p $dataOI_npe_dirPreff
 	simtelIn=$dataOIdirPreff"/data/corsika_run1.simtel.gz"
@@ -36,10 +36,10 @@ else
 	python DBscan_on_simtel_data_stereo.py --trg $simtelIn $outpkl $outcsv $pixel_mapping_csv $isolated_flower_seed_super_flower_csv $isolated_flower_seed_flower_csv $all_seed_flower_csv
     elif [ "$1" = "-n" ]; then
 	#
-	#dataOIdirPreff="../scratch/simtel_data/proton_st/"
-	#dataOI_npe_dirPreff="../scratch/simtel_data/proton_st/npe/"
-	dataOIdirPreff="../scratch/simtel_data/gamma_st/"
-	dataOI_npe_dirPreff="../scratch/simtel_data/gamma_st/npe/"
+	#dataOIdirPreff="scratch/simtel_data/proton_st/"
+	#dataOI_npe_dirPreff="scratch/simtel_data/proton_st/npe/"
+	dataOIdirPreff="scratch/simtel_data/gamma_st/"
+	dataOI_npe_dirPreff="scratch/simtel_data/gamma_st/npe/"
 	#
 	mkdir -p $dataOI_npe_dirPreff
 	simtelIn=$dataOIdirPreff"/data/corsika_run1.simtel.gz"
@@ -53,9 +53,9 @@ else
 	python DBscan_on_simtel_data_stereo.py --noise $simtelIn $outpkl $outcsv $pixel_mapping_csv $isolated_flower_seed_super_flower_csv $isolated_flower_seed_flower_csv $all_seed_flower_csv
     elif [ "$1" = "--d_mono" ]; then
 	#
-	dataOIdirPreff="../scratch/simtel_data/gamma_diffuse/"
-	dataOI_npe_dirPreff="../scratch/simtel_data/gamma_diffuse/npe/"
-	dataCtapipeOIdirPreff="../scratch/ctapipe_data/gamma_diffuse/"
+	dataOIdirPreff="scratch/simtel_data/gamma_diffuse/"
+	dataOI_npe_dirPreff="scratch/simtel_data/gamma_diffuse/npe/"
+	dataCtapipeOIdirPreff="scratch/ctapipe_data/gamma_diffuse/"
 	#
 	mkdir -p $dataOI_npe_dirPreff
 	simtelIn=$dataOIdirPreff"/data/corsika_run1.simtel.gz"
@@ -71,8 +71,8 @@ else
 	python3 DBscan_on_simtel_data_stereo.py --trg $simtelIn $dl1In $outpkl $outcsv $outh5 $pixel_mapping_csv $isolated_flower_seed_super_flower_csv $isolated_flower_seed_flower_csv $all_seed_flower_csv	
     elif [ "$1" = "--n_mono" ]; then
 	#
-	dataOIdirPreff="../scratch/simtel_data/gamma_diffuse/"
-	dataOI_npe_dirPreff="../scratch/simtel_data/gamma_diffuse/npe/"
+	dataOIdirPreff="scratch/simtel_data/gamma_diffuse/"
+	dataOI_npe_dirPreff="scratch/simtel_data/gamma_diffuse/npe/"
 	#
 	mkdir -p $dataOI_npe_dirPreff
 	simtelIn=$dataOIdirPreff"/data/corsika_run1.simtel.gz"
@@ -85,10 +85,10 @@ else
 	all_seed_flower_csv="all_seed_flower.list"
 	python3 DBscan_on_simtel_data_stereo.py --noise $simtelIn $outpkl $outcsv $pixel_mapping_csv $isolated_flower_seed_super_flower_csv $isolated_flower_seed_flower_csv $all_seed_flower_csv
     elif [ "$1" = "-m" ]; then
-	simtelIn="../scratch/simtel_data/old/proton_st_NSB268MHz/data/corsika_run1.simtel.gz"
+	simtelIn="scratch/simtel_data/old/proton_st_NSB268MHz/data/corsika_run1.simtel.gz"
 	python DBscan_on_simtel_data_stereo.py --getmap $simtelIn
     elif [ "$1" = "--astropytable" ]; then
-	simtelIn="../scratch/simtel_data/proton_st/data/corsika_run1.simtel.gz"
+	simtelIn="scratch/simtel_data/proton_st/data/corsika_run1.simtel.gz"
 	python3 DBscan_on_simtel_data_stereo.py --astropytable $simtelIn
     elif [ "$1" = "--astropytable_read" ]; then
 	tableIn="testtable.h5"

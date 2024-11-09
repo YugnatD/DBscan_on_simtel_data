@@ -1113,7 +1113,9 @@ if __name__ == "__main__":
                                                                                                                L1_trigger_pixel_cluster_list=isolated_flower_seed_super_flower,
                                                                                                                L3_trigger_DBSCAN_pixel_cluster_list=isolated_flower_seed_flower,
                                                                                                                L3_trigger_DBSCAN_pixel_cluster_list_all=all_seed_flower)
-        obs_id=get_obs_id_from_h5dl1_file(h5dl1InName=dl1In)
+        # obs_id=get_obs_id_from_h5dl1_file(h5dl1InName=dl1In)
+        # TANGUY : im getting a bug here, so i just put a random obs_id
+        obs_id = 0
         save_data(event_info_list,
                   mask_cl_LST1_list, mask_cl_LST2_list, mask_cl_LST3_list, mask_cl_LST4_list,
                   outpkl, outcsv, outh5, obs_id)
