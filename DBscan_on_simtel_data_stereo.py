@@ -21,6 +21,11 @@ from ctapipe.io.astropy_helpers import write_table
 #
 from tables import open_file
 
+import csv
+from tm_ctao import Frame
+from tm_ctao import HECS
+from tm_ctao import DataCube
+
 ###################################
 #
 #
@@ -45,6 +50,19 @@ _DBSCAN_digitalsum_threshold = 2160
 _DBSCAN_min_samples = 15
 #
 #
+
+_CONVOLVE_KERNEL_SIZE_XY=3
+_CONVOLVE_KERNEL_SIZE_T=4
+_CONVOLVE_THRESHOLD=8
+
+# will be set in before the evtloop
+arc_points_shrink = None
+arc_points = None
+max_r = 0
+max_c = 0
+
+
+
 ###################################
 
 def print_setup():
@@ -58,6 +76,22 @@ def print_setup():
     print("_DBSCAN_min_samples_isolated          = ",_DBSCAN_min_samples_isolated)
     print("_DBSCAN_digitalsum_threshold          = ",_DBSCAN_digitalsum_threshold)
     print("_DBSCAN_min_samples                   = ",_DBSCAN_min_samples)
+
+def load_arc_points_from_csv(filename):
+    arc_points_shrink = []
+    arc_points = []
+    with open(filename, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            a = int(row['a'])
+            r = int(row['r'])
+            c = int(row['c'])
+            arc_points.append((a, r, c))
+            a = int(row['a_shrinked'])
+            r = int(row['r_shrinked'])
+            c = int(row['c_shrinked'])
+            arc_points_shrink.append((a, r, c))
+    return arc_points_shrink, arc_points
     
 def extend_channel_list( channel_list, number_of_wf_time_samples):
     channel_list_extended=channel_list.copy()
@@ -87,47 +121,82 @@ def extend_pixel_mapping( pixel_mapping, channel_list, number_of_wf_time_samples
     return pixel_mapping_extended
 
 def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, channel_list_extended, time_norm, digitalsum_threshold, DBSCAN_eps, DBSCAN_min_samples):
+    global arc_points
+    global arc_points_shrink
+    global max_r
+    global max_c
     #
-    #print("digitalsum.shape             ",digitalsum.shape)
-    #print("pixel_mapping.shape          ",pixel_mapping.shape)
-    #print("pixel_mapping_extended.shape ",pixel_mapping_extended.shape)
-    #print("channel_list_extended.shape  ",channel_list_extended.shape)
-    #
+    # print("")
+    # print("digitalsum.shape             ",digitalsum.shape)
+    # print("pixel_mapping.shape          ",pixel_mapping.shape)
+    # print("pixel_mapping_extended.shape ",pixel_mapping_extended.shape)
+    # print("channel_list_extended.shape  ",channel_list_extended.shape)
     clusters_info=def_clusters_info()
-    X=pixel_mapping_extended[digitalsum>digitalsum_threshold]
-    channel_list_cut=channel_list_extended[digitalsum>digitalsum_threshold]
-    X=X*[[1,1,time_norm]] 
-    #
-    dbscan = DBSCAN( eps = DBSCAN_eps, min_samples = DBSCAN_min_samples)
-    clusters = dbscan.fit_predict(X)
-    clustersID = np.unique(clusters)
-    #
-    #print("clustersID              ",clustersID)
-    #print(np.unique(channel_list_cut[clusters>-1]))
-    mask=np.zeros(pixel_mapping.shape[0],dtype=int)
-    mask[np.unique(channel_list_cut[clusters>-1])]=int(1)
-    #print("mask.shape  ",mask.shape)
-    #print(mask)
-    #print("channel_list_cut.shape  ",channel_list_cut.shape)
-    #print("clusters.shape          ",clusters.shape)
-    #print("clusters                ",clusters)
-    #
-    #
-    clusters_info['n_digitalsum_points'] = len(X)
-    #
-    if (len(clustersID) > 1) :
-        clustersID = clustersID[clustersID>-1]
-        clustersIDmax = np.argmax([len(clusters[clusters==clID]) for clID in clustersID])
+    # if digitalsum.shape is (1141, 75)
+    if digitalsum.shape[0] == 1141 and digitalsum.shape[1] == 75:
+        X=digitalsum>digitalsum_threshold
+        # X = [1.0 if val else 0.0 for val in X]
+        X = X.astype(float)
+        # X a list of (1141, 75)
+        # extract 1141 pixels
+        frames = []
+        for i in range(digitalsum.shape[1]):
+            frame = Frame.Frame(max_r, max_c, arc_points_shrink)
+            frame.load_points(X[:, i])
+            frames.append(frame)
+        data_cube = DataCube.DataCube(frames)
+        # data_cube.plot()
+        datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
+        # create a list of points in the datacube that are still 1, these points are considered as clusters
+        points = datacube_out.get_points_arc_above_threshold(0.9)
+        points_converted = []
+        for point in points:
+            # check for the corresponding pixel in the pixel_mapping
+            for i in range(len(arc_points)):
+                if point[0] == arc_points[i][0] and point[1] == arc_points[i][1] and point[2] == arc_points[i][2]:
+                    # we have found the corresponding pixel
+                    # convert the pixel to x,y and add the time
+                    x, y = datacube_out.get_frame(0).arc_to_xy(point[0], point[1], point[2])
+                    t = point[3] * _time_of_one_sample_s * time_norm
+                    points_converted.append((x, y, t))
+        clusters_info['n_digitalsum_points'] = 1141*75 # no sure about this
+        if (len(points_converted) > 0):
+            clustersID = 1
+            clustersIDmax = 1
+            clusters_info['n_clusters'] = 1
+            clusters_info['n_points'] = len(points_converted)
+            clusters_info['x_mean'] = np.mean([point[0] for point in points_converted])
+            clusters_info['y_mean'] = np.mean([point[1] for point in points_converted])
+            clusters_info['t_mean'] = np.mean([point[2] for point in points_converted])
+            clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
+            clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
+        mask = np.zeros(pixel_mapping.shape[0], dtype=int)
+        
+    else:
+        X=pixel_mapping_extended[digitalsum>digitalsum_threshold]
+        channel_list_cut=channel_list_extended[digitalsum>digitalsum_threshold]
+        X=X*[[1,1,time_norm]] 
         #
-        clusters_info['n_clusters'] = len(clustersID)
-        clusters_info['n_points'] = len(clusters[clusters==clustersIDmax])
-        #
-        clusters_info['x_mean'] = np.mean(X[clusters==clustersIDmax][:,0])
-        clusters_info['y_mean'] = np.mean(X[clusters==clustersIDmax][:,1])
-        clusters_info['t_mean'] = np.mean(X[clusters==clustersIDmax][:,2])
-        #
-        clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
-        clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
+        dbscan = DBSCAN( eps = DBSCAN_eps, min_samples = DBSCAN_min_samples)
+        clusters = dbscan.fit_predict(X)
+        clustersID = np.unique(clusters)
+        mask=np.zeros(pixel_mapping.shape[0],dtype=int)
+        mask[np.unique(channel_list_cut[clusters>-1])]=int(1)
+        clusters_info['n_digitalsum_points'] = len(X)
+
+        if (len(clustersID) > 1) :
+            clustersID = clustersID[clustersID>-1]
+            clustersIDmax = np.argmax([len(clusters[clusters==clID]) for clID in clustersID])
+            #
+            clusters_info['n_clusters'] = len(clustersID)
+            clusters_info['n_points'] = len(clusters[clusters==clustersIDmax])
+            #
+            clusters_info['x_mean'] = np.mean(X[clusters==clustersIDmax][:,0])
+            clusters_info['y_mean'] = np.mean(X[clusters==clustersIDmax][:,1])
+            clusters_info['t_mean'] = np.mean(X[clusters==clustersIDmax][:,2])
+            #
+            clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
+            clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
     #
     return clusters_info, mask
 
@@ -486,6 +555,14 @@ def evtloop(datafilein, h5dl1In, nevmax, pixel_mapping, L1_trigger_pixel_cluster
     #
     print("evtloop")
     #
+    # init the HECS for the "dbscan"
+    global arc_points
+    global arc_points_shrink
+    global max_r
+    global max_c
+    arc_points_shrink, arc_points = load_arc_points_from_csv("conversion_table_LST_clusters.csv")
+    max_r = max([r for (a, r, c) in arc_points_shrink]) + 1
+    max_c = max([c for (a, r, c) in arc_points_shrink]) + 1
     sf = SimTelFile(datafilein)
     wf=np.array([], dtype=np.uint16)
     ev_counter=0
@@ -587,7 +664,7 @@ def evtloop(datafilein, h5dl1In, nevmax, pixel_mapping, L1_trigger_pixel_cluster
                 mask_cl_LST4=np.zeros(pixel_mapping.shape[0],dtype=int)
         #
         #
-        #print("event_id = ", int(ev['event_id']))
+        # print("event_id = ", int(ev['event_id']))
         #
         for wf, npe, lst_id in zip( wf_list, n_pe_per_tel_list, LSTID_list) :
             try:                
@@ -597,7 +674,7 @@ def evtloop(datafilein, h5dl1In, nevmax, pixel_mapping, L1_trigger_pixel_cluster
                 L3_digitalsum_all = digital_sum(wf=wf, digi_sum_channel_list=L3_trigger_DBSCAN_pixel_cluster_list_all)
                 #
                 L1_trigger_info = get_L1_trigger_info(digitalsum=L1_digitalsum, pixel_mapping=pixel_mapping, digi_sum_channel_list=L1_trigger_pixel_cluster_list)
-                #                
+                #         
                 DBSCAN_clusters_info_isolated, mask_tr = get_DBSCAN_clusters( digitalsum = L3_digitalsum,
                                                                      pixel_mapping = pixel_mapping,
                                                                      pixel_mapping_extended = pixel_mapping_extended,
@@ -607,6 +684,7 @@ def evtloop(datafilein, h5dl1In, nevmax, pixel_mapping, L1_trigger_pixel_cluster
                                                                      DBSCAN_eps = _DBSCAN_eps_isolated,
                                                                      DBSCAN_min_samples = _DBSCAN_min_samples_isolated)
                 #
+            
                 DBSCAN_clusters_info, mask_cl = get_DBSCAN_clusters( digitalsum = L3_digitalsum_all,
                                                             pixel_mapping = pixel_mapping,
                                                             pixel_mapping_extended = pixel_mapping_extended_all,
