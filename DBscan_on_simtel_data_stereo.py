@@ -22,9 +22,14 @@ from ctapipe.io.astropy_helpers import write_table
 from tables import open_file
 
 import csv
+# Full Python Module
+# from tm_ctao import Frame
+# from tm_ctao import HECS
+# from tm_ctao import DataCube
+
 from tm_ctao import Frame
-from tm_ctao import HECS
-from tm_ctao import DataCube
+from tm_ctao import Hecs
+from tm_ctao import Datacube
 
 ###################################
 #
@@ -141,10 +146,12 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
         # extract 1141 pixels
         frames = []
         for i in range(digitalsum.shape[1]):
-            frame = Frame.Frame(max_r, max_c, arc_points_shrink)
+            frame = Frame(max_r, max_c, arc_points_shrink)
+            # frame = Frame.Frame(max_r, max_c, arc_points_shrink)
             frame.load_points(X[:, i])
             frames.append(frame)
-        data_cube = DataCube.DataCube(frames)
+        data_cube = Datacube(frames)
+        # data_cube = DataCube.DataCube(frames)
         # data_cube.plot()
         datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
         # create a list of points in the datacube that are still 1, these points are considered as clusters
