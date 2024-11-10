@@ -139,20 +139,22 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     clusters_info=def_clusters_info()
     # if digitalsum.shape is (1141, 75)
     if digitalsum.shape[0] == 1141 and digitalsum.shape[1] == 75:
+        # print("applying convolve")
         X=digitalsum>digitalsum_threshold
         # X = [1.0 if val else 0.0 for val in X]
         X = X.astype(float)
-        # X a list of (1141, 75)
-        # extract 1141 pixels
         frames = []
         for i in range(digitalsum.shape[1]):
             frame = Frame(max_r, max_c, arc_points_shrink)
             # frame = Frame.Frame(max_r, max_c, arc_points_shrink)
             frame.load_points(X[:, i])
             frames.append(frame)
+        
         data_cube = Datacube(frames)
         # data_cube = DataCube.DataCube(frames)
-        # data_cube.plot()
+        # data_cube.refresh_plot()
+        # data_cube.plot(600, 600, 10)
+        # time.sleep(100)
         datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
         # create a list of points in the datacube that are still 1, these points are considered as clusters
         points = datacube_out.get_points_arc_above_threshold(0.9)
@@ -170,6 +172,7 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
         if (len(points_converted) > 0):
             clustersID = 1
             clustersIDmax = 1
+            print(points_converted)
             clusters_info['n_clusters'] = 1
             clusters_info['n_points'] = len(points_converted)
             clusters_info['x_mean'] = np.mean([point[0] for point in points_converted])
@@ -178,8 +181,8 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
             clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
         mask = np.zeros(pixel_mapping.shape[0], dtype=int)
-        
     else:
+        # print("applying DBSCAN")
         X=pixel_mapping_extended[digitalsum>digitalsum_threshold]
         channel_list_cut=channel_list_extended[digitalsum>digitalsum_threshold]
         X=X*[[1,1,time_norm]] 
@@ -724,7 +727,8 @@ def evtloop(datafilein, h5dl1In, nevmax, pixel_mapping, L1_trigger_pixel_cluster
                     mask_cl_LST4=mask_cl
                 #
                 #
-            except:
+            except Exception as e:
+                print("Exception: ", e)
                 if (lst_id == 0) :
                     L1_trigger_info_LST1 = def_L1_trigger_info()
                     DBSCAN_clusters_info_isolated_LST1 = def_clusters_info()
