@@ -136,9 +136,12 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     # print("pixel_mapping.shape          ",pixel_mapping.shape)
     # print("pixel_mapping_extended.shape ",pixel_mapping_extended.shape)
     # print("channel_list_extended.shape  ",channel_list_extended.shape)
+    
     clusters_info=def_clusters_info()
     # if digitalsum.shape is (1141, 75)
+    # if False:
     if digitalsum.shape[0] == 1141 and digitalsum.shape[1] == 75:
+        start_time = time.time()
         # print("applying convolve")
         X=digitalsum>digitalsum_threshold
         # X = [1.0 if val else 0.0 for val in X]
@@ -149,13 +152,16 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             # frame = Frame.Frame(max_r, max_c, arc_points_shrink)
             frame.load_points(X[:, i])
             frames.append(frame)
-        
         data_cube = Datacube(frames)
+        data_cube.refresh_plot()
+        data_cube.plot(600, 600, 10, 20)
         # data_cube = DataCube.DataCube(frames)
         # data_cube.refresh_plot()
         # data_cube.plot(600, 600, 10)
         # time.sleep(100)
+        # measure the time
         datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
+        print("time for convolve: ", time.time() - start_time)
         # create a list of points in the datacube that are still 1, these points are considered as clusters
         points = datacube_out.get_points_arc_above_threshold(0.9)
         points_converted = []
@@ -168,7 +174,7 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
                     x, y = datacube_out.get_frame(0).arc_to_xy(point[0], point[1], point[2])
                     t = point[3] * _time_of_one_sample_s * time_norm
                     points_converted.append((x, y, t))
-        clusters_info['n_digitalsum_points'] = 1141*75 # no sure about this
+        clusters_info['n_digitalsum_points'] = len(X)
         if (len(points_converted) > 0):
             clustersID = 1
             clustersIDmax = 1
@@ -181,6 +187,7 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
             clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
         mask = np.zeros(pixel_mapping.shape[0], dtype=int)
+        
     else:
         # print("applying DBSCAN")
         X=pixel_mapping_extended[digitalsum>digitalsum_threshold]
@@ -193,7 +200,7 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
         mask=np.zeros(pixel_mapping.shape[0],dtype=int)
         mask[np.unique(channel_list_cut[clusters>-1])]=int(1)
         clusters_info['n_digitalsum_points'] = len(X)
-
+        print(clusters_info['n_digitalsum_points'])
         if (len(clustersID) > 1) :
             clustersID = clustersID[clustersID>-1]
             clustersIDmax = np.argmax([len(clusters[clusters==clID]) for clID in clustersID])
