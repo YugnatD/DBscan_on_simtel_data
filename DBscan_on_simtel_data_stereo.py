@@ -27,9 +27,9 @@ import csv
 # from tm_ctao import HECS
 # from tm_ctao import DataCube
 
-from tm_ctao import Frame
-from tm_ctao import Hecs
-from tm_ctao import Datacube
+from tm_ctao_cpp import Frame
+from tm_ctao_cpp import Hecs
+from tm_ctao_cpp import Datacube
 
 ###################################
 #
@@ -65,6 +65,7 @@ arc_points_shrink = None
 arc_points = None
 max_r = 0
 max_c = 0
+cpt_debug = 0
 
 
 
@@ -130,7 +131,8 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     global arc_points_shrink
     global max_r
     global max_c
-    #
+    global cpt_debug
+
     # print("")
     # print("digitalsum.shape             ",digitalsum.shape)
     # print("pixel_mapping.shape          ",pixel_mapping.shape)
@@ -141,8 +143,7 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     # if digitalsum.shape is (1141, 75)
     # if False:
     if digitalsum.shape[0] == 1141 and digitalsum.shape[1] == 75:
-        start_time = time.time()
-        # print("applying convolve")
+        cpt_debug += 1
         X=digitalsum>digitalsum_threshold
         # X = [1.0 if val else 0.0 for val in X]
         X = X.astype(float)
@@ -153,32 +154,33 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             frame.load_points(X[:, i])
             frames.append(frame)
         data_cube = Datacube(frames)
-        data_cube.refresh_plot()
-        data_cube.plot(600, 600, 10, 20)
-        # data_cube = DataCube.DataCube(frames)
-        # data_cube.refresh_plot()
-        # data_cube.plot(600, 600, 10)
-        # time.sleep(100)
+        # if cpt_debug == 2:
+        #     data_cube.refresh_plot()
+        #     data_cube.plot(600, 600, 10, 50)
+        #     time.sleep(100)
         # measure the time
         datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
-        print("time for convolve: ", time.time() - start_time)
         # create a list of points in the datacube that are still 1, these points are considered as clusters
         points = datacube_out.get_points_arc_above_threshold(0.9)
+        offset = np.array(datacube_out.get_frame(0).arc_to_xy(arc_points[0][0], arc_points[0][1], arc_points[0][2]))
         points_converted = []
         for point in points:
             # check for the corresponding pixel in the pixel_mapping
-            for i in range(len(arc_points)):
-                if point[0] == arc_points[i][0] and point[1] == arc_points[i][1] and point[2] == arc_points[i][2]:
+            for i in range(len(arc_points_shrink)):
+                if point[0] == arc_points_shrink[i][0] and point[1] == arc_points_shrink[i][1] and point[2] == arc_points_shrink[i][2]:
                     # we have found the corresponding pixel
                     # convert the pixel to x,y and add the time
-                    x, y = datacube_out.get_frame(0).arc_to_xy(point[0], point[1], point[2])
+                    x, y = np.array(datacube_out.get_frame(0).arc_to_xy(arc_points[i][0], arc_points[i][1], arc_points[i][2]) ) - offset
                     t = point[3] * _time_of_one_sample_s * time_norm
                     points_converted.append((x, y, t))
+        # if cpt_debug == 2:
+        #     print("cpt_debug = ", cpt_debug)
+        #     print(points)
+        #     print(points_converted)
         clusters_info['n_digitalsum_points'] = len(X)
         if (len(points_converted) > 0):
-            clustersID = 1
-            clustersIDmax = 1
-            print(points_converted)
+            clustersID = [0] # id of all the clusters that exist
+            clustersIDmax = 0 # id of the cluster with the most points
             clusters_info['n_clusters'] = 1
             clusters_info['n_points'] = len(points_converted)
             clusters_info['x_mean'] = np.mean([point[0] for point in points_converted])
@@ -200,7 +202,6 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
         mask=np.zeros(pixel_mapping.shape[0],dtype=int)
         mask[np.unique(channel_list_cut[clusters>-1])]=int(1)
         clusters_info['n_digitalsum_points'] = len(X)
-        print(clusters_info['n_digitalsum_points'])
         if (len(clustersID) > 1) :
             clustersID = clustersID[clustersID>-1]
             clustersIDmax = np.argmax([len(clusters[clusters==clID]) for clID in clustersID])
