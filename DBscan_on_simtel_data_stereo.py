@@ -145,15 +145,10 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     # if digitalsum.shape is (1141, 75)
     # if False:
     if digitalsum.shape[0] == 1141 and digitalsum.shape[1] == 75:
-        cpt_debug_shrink += 1
-        X=pixel_mapping_extended[digitalsum>digitalsum_threshold]
-        X=X*[[1,1,time_norm]]
-        time = X[:, 2]  # Extracts the third column (time)
-        # X = X[:, :2]  # Extracts the first two columns (x and y)
+        temporal_values = (pixel_mapping_extended[:, :, 2] * time_norm)[0]
+        # x_value = (pixel_mapping_extended[:, :, 1] * time_norm)[0]
+        # y_value = (pixel_mapping_extended[:, :, 0] * time_norm)[0]
         X = digitalsum>digitalsum_threshold
-        # extract the time information
-        # X=digitalsum>digitalsum_threshold
-        # # extract the time information
         X = X.astype(float)
         frames = []
         for i in range(digitalsum.shape[1]):
@@ -162,10 +157,6 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             frame.load_points(X[:, i])
             frames.append(frame)
         data_cube = Datacube(frames)
-        # if cpt_debug_shrink == 2:
-        #     data_cube.refresh_plot()
-        #     data_cube.plot(600, 600, 10, 50)
-        #     time.sleep(100)
         # measure the time
         datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
         # create a list of points in the datacube that are still 1, these points are considered as clusters
@@ -179,13 +170,8 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
                     # we have found the corresponding pixel
                     # convert the pixel to x,y and add the time
                     x, y = np.array(datacube_out.get_frame(0).arc_to_xy(arc_points[i][0], arc_points[i][1], arc_points[i][2]) ) - offset
-                    t = point[3] * _time_of_one_sample_s * time_norm
+                    t = temporal_values[point[3]]
                     points_converted.append((x, y, t))
-        # if cpt_debug_shrink == 2:
-        #     print("cpt_debug_shrink = ", cpt_debug_shrink)
-        #     print(points)
-        #     print(points_converted)
-        # print(len(time_norm))
         clusters_info['n_digitalsum_points'] = len(X)
         if (len(points_converted) > 0):
             clustersID = [0] # id of all the clusters that exist
@@ -195,28 +181,13 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             clusters_info['x_mean'] = np.mean([point[0] for point in points_converted])
             clusters_info['y_mean'] = np.mean([point[1] for point in points_converted])
             clusters_info['t_mean'] = np.mean([point[2] for point in points_converted])
-            if cpt_debug_shrink == 2:
-                print("cpt_debug_shrink = ", cpt_debug_shrink)
-                print("clustersID = ", clustersID)
-                print("clustersIDmax = ", clustersIDmax)
-                print("clusters_info['n_clusters'] = ", clusters_info['n_clusters'])
-                print("clusters_info['n_points'] = ", clusters_info['n_points'])
-                print("clusters_info['x_mean'] = ", clusters_info['x_mean'])
-                print("clusters_info['y_mean'] = ", clusters_info['y_mean'])
-                print("clusters_info['t_mean'] = ", clusters_info['t_mean'])
             clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
             clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
         mask = np.zeros(pixel_mapping.shape[0], dtype=int)
-        
     else:
-        cpt_debug_full += 1
         X=pixel_mapping_extended[digitalsum>digitalsum_threshold]
         channel_list_cut=channel_list_extended[digitalsum>digitalsum_threshold]
         X=X*[[1,1,time_norm]] 
-        # print only the columns about the time
-        print(X)
-        print(X.shape)
-        print(time_norm)
         #
         dbscan = DBSCAN( eps = DBSCAN_eps, min_samples = DBSCAN_min_samples)
         clusters = dbscan.fit_predict(X)
