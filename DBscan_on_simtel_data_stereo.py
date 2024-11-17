@@ -158,7 +158,8 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             frames.append(frame)
         data_cube = Datacube(frames)
         # measure the time
-        datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
+        # datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
+        datacube_out = data_cube.dbscan_convolve_mt(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD, 24)
         # create a list of points in the datacube that are still 1, these points are considered as clusters
         points = datacube_out.get_points_arc_above_threshold(0.9)
         offset = np.array(datacube_out.get_frame(0).arc_to_xy(arc_points[0][0], arc_points[0][1], arc_points[0][2]))
