@@ -145,34 +145,17 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     # if digitalsum.shape is (1141, 75)
     # if False:
     if digitalsum.shape[0] == 1141 and digitalsum.shape[1] == 75:
+        cpt_debug_shrink += 1
+        # start_time = time.time()
         temporal_values = (pixel_mapping_extended[:, :, 2] * time_norm)[0]
-        # x_value = (pixel_mapping_extended[:, :, 1] * time_norm)[0]
-        # y_value = (pixel_mapping_extended[:, :, 0] * time_norm)[0]
         X = digitalsum>digitalsum_threshold
         X = X.astype(float)
-        frames = []
-        for i in range(digitalsum.shape[1]):
-            frame = Frame(max_r, max_c, arc_points_shrink)
-            # frame = Frame.Frame(max_r, max_c, arc_points_shrink)
-            frame.load_points(X[:, i])
-            frames.append(frame)
-        data_cube = Datacube(frames)
-        # measure the time
+        data_cube = Datacube(max_r, max_c, X, arc_points_shrink)
         # datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
         datacube_out = data_cube.dbscan_convolve_mt(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD, 24)
         # create a list of points in the datacube that are still 1, these points are considered as clusters
-        points = datacube_out.get_points_arc_above_threshold(0.9)
-        offset = np.array(datacube_out.get_frame(0).arc_to_xy(arc_points[0][0], arc_points[0][1], arc_points[0][2]))
-        points_converted = []
-        for point in points:
-            # check for the corresponding pixel in the pixel_mapping
-            for i in range(len(arc_points_shrink)):
-                if point[0] == arc_points_shrink[i][0] and point[1] == arc_points_shrink[i][1] and point[2] == arc_points_shrink[i][2]:
-                    # we have found the corresponding pixel
-                    # convert the pixel to x,y and add the time
-                    x, y = np.array(datacube_out.get_frame(0).arc_to_xy(arc_points[i][0], arc_points[i][1], arc_points[i][2]) ) - offset
-                    t = temporal_values[point[3]]
-                    points_converted.append((x, y, t))
+        points_converted = datacube_out.get_points_xyt_above_threshold_centered(0.9, temporal_values, arc_points_shrink, arc_points)
+        # print("time for dbscan_convolve_mt = ", time.time() - start_time)
         clusters_info['n_digitalsum_points'] = len(X)
         if (len(points_converted) > 0):
             clustersID = [0] # id of all the clusters that exist
