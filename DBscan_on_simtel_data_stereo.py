@@ -27,6 +27,7 @@ import csv
 # from tm_ctao import HECS
 # from tm_ctao import DataCube
 
+import tm_ctao_cpp
 from tm_ctao_cpp import Frame
 from tm_ctao_cpp import Hecs
 from tm_ctao_cpp import Datacube
@@ -56,9 +57,9 @@ _DBSCAN_min_samples = 15
 #
 #
 
-_CONVOLVE_KERNEL_SIZE_XY=3
-_CONVOLVE_KERNEL_SIZE_T=4
-_CONVOLVE_THRESHOLD=8
+_CONVOLVE_KERNEL_SIZE_XY=1
+_CONVOLVE_KERNEL_SIZE_T=1
+_CONVOLVE_THRESHOLD=7
 
 # will be set in before the evtloop
 arc_points_shrink = None
@@ -67,6 +68,8 @@ max_r = 0
 max_c = 0
 cpt_debug_shrink = 0
 cpt_debug_full = 0
+
+neighbors_xy = None
 
 
 
@@ -90,15 +93,24 @@ def load_arc_points_from_csv(filename):
     with open(filename, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            a = int(row['a'])
-            r = int(row['r'])
-            c = int(row['c'])
+            a = int(row['full_a'])
+            r = int(row['full_r'])
+            c = int(row['full_c'])
             arc_points.append((a, r, c))
-            a = int(row['a_shrinked'])
-            r = int(row['r_shrinked'])
-            c = int(row['c_shrinked'])
+            a = int(row['shrinked_a'])
+            r = int(row['shrinked_r'])
+            c = int(row['shrinked_c'])
             arc_points_shrink.append((a, r, c))
     return arc_points_shrink, arc_points
+
+def load_epsilon_neighbors_from_csv(eps):
+    csv_file = 'camera_file/CTA_LST_Pixels_info_epsilon_' + str(eps) + '.csv'
+    with open(csv_file, 'r') as f:
+        reader = csv.reader(f)
+        # skip the header
+        next(reader)
+        neighbors = [list(map(int, row)) for row in reader]
+    return neighbors
     
 def extend_channel_list( channel_list, number_of_wf_time_samples):
     channel_list_extended=channel_list.copy()
@@ -134,6 +146,7 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     global max_c
     global cpt_debug_shrink
     global cpt_debug_full
+    global neighbors_xy
 
     # print("")
     # print("digitalsum.shape             ",digitalsum.shape)
@@ -150,12 +163,11 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
         temporal_values = (pixel_mapping_extended[:, :, 2] * time_norm)[0]
         X = digitalsum>digitalsum_threshold
         X = X.astype(float)
-        data_cube = Datacube(max_r, max_c, X, arc_points_shrink)
-        # datacube_out = data_cube.dbscan_convolve(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD)
-        datacube_out = data_cube.dbscan_convolve_mt(_CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_KERNEL_SIZE_XY, _CONVOLVE_THRESHOLD, 24)
-        # create a list of points in the datacube that are still 1, these points are considered as clusters
-        points_converted = datacube_out.get_points_xyt_above_threshold_centered(0.9, temporal_values, arc_points_shrink, arc_points)
-        # print("time for dbscan_convolve_mt = ", time.time() - start_time)
+
+        data_out = tm_ctao_cpp.dbscan_convolve_mt(X, neighbors_xy, _CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_THRESHOLD, 24)
+        data_cube = Datacube(max_r, max_c, data_out, arc_points_shrink)
+        points_converted = data_cube.get_points_xyt_above_threshold_centered(0.9, temporal_values, arc_points_shrink, arc_points)
+
         clusters_info['n_digitalsum_points'] = len(X)
         if (len(points_converted) > 0):
             clustersID = [0] # id of all the clusters that exist
@@ -564,7 +576,9 @@ def evtloop(datafilein, h5dl1In, nevmax, pixel_mapping, L1_trigger_pixel_cluster
     global arc_points_shrink
     global max_r
     global max_c
-    arc_points_shrink, arc_points = load_arc_points_from_csv("conversion_table_LST_clusters.csv")
+    global neighbors_xy
+    arc_points_shrink, arc_points = load_arc_points_from_csv("camera_file/CTA_LST_Pixels_info_shrink.csv")
+    neighbors_xy = load_epsilon_neighbors_from_csv(_CONVOLVE_KERNEL_SIZE_XY)
     max_r = max([r for (a, r, c) in arc_points_shrink]) + 1
     max_c = max([c for (a, r, c) in arc_points_shrink]) + 1
     sf = SimTelFile(datafilein)
