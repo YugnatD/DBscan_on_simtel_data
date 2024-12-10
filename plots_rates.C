@@ -54,8 +54,8 @@ Int_t plots_rates(){
   //
   //
   //
-  read_file("L3_digitalsum_noiseNSB268MHz_arr_all.pdf_rates.pdf.csv", h1_wf_noise, gr_wf_noise_vs_thADC);
-  //read_file("L1_digitalsum_noiseNSB268MHz_arr.pdf_rates.pdf.csv", h1_wf_noise, gr_wf_noise_vs_thADC);
+  //read_file("L3_digitalsum_noiseNSB268MHz_arr_all.pdf_rates.pdf.csv", h1_wf_noise, gr_wf_noise_vs_thADC);
+  read_file("L1_digitalsum_noiseNSB268MHz_arr.pdf_rates.pdf.csv", h1_wf_noise, gr_wf_noise_vs_thADC);
   //read_file("L1_max_digi_sum_noiseNSB268MHz.pdf_rates.pdf.csv", h1_wf_noise, gr_wf_noise_vs_thADC);
   //read_file("wf_noiseNSB268MHz_blacklist_arr.pdf_rates.pdf.csv", h1_wf_noise_bl, gr_wf_noise_vs_thADC_bl);
   //read_file("L0_digitalsum_noiseNSB268MHz_blacklist_arr.pdf_rates.pdf.csv", h1_wf_noise_bl, gr_wf_noise_vs_thADC_bl);
