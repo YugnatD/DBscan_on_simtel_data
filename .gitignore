@@ -88,3 +88,10 @@ corsika_run1.npe.h5
 corsika_run1.npe.pkl
 corsika_run1.simtel.gz
 gamma_run1.dl1.h5
+gamma_run1.dl1.h5
+DBSCAN_gamma_corsika_run1.npe.csv
+convDBSCAN_gamma_corsika_run1.npe.csv
+df_proton_rate_l1.csv
+df_proton_rate_l1_format.csv
+df_proton_rate_l2.csv
+df_proton_rate_l2_format.csv

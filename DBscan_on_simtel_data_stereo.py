@@ -53,7 +53,7 @@ _DBSCAN_min_samples_isolated = 3
 _time_norm=0.06
 _DBSCAN_eps = 0.11
 _DBSCAN_digitalsum_threshold = 2160
-_DBSCAN_min_samples = 15
+_DBSCAN_min_samples = 50
 #
 #
 
