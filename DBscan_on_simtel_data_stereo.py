@@ -57,9 +57,9 @@ _DBSCAN_min_samples = 15
 #
 #
 
-_CONVOLVE_KERNEL_SIZE_XY=1
+_CONVOLVE_KERNEL_SIZE_XY=3
 _CONVOLVE_KERNEL_SIZE_T=1
-_CONVOLVE_THRESHOLD=7
+_CONVOLVE_THRESHOLD=5
 
 # will be set in before the evtloop
 arc_points_shrink = None
@@ -1173,7 +1173,7 @@ if __name__ == "__main__":
                        L3_trigger_DBSCAN_pixel_cluster_list=isolated_flower_seed_flower,
                        L3_trigger_DBSCAN_pixel_cluster_list_all=all_seed_flower)
         #
-    elif (len(sys.argv)==11 and (str(sys.argv[1]) == "--trg")):
+    elif (len(sys.argv)== 14 and (str(sys.argv[1]) == "--trg")):
         #
         simtelIn = str(sys.argv[2])
         dl1In = str(sys.argv[3])
@@ -1184,6 +1184,9 @@ if __name__ == "__main__":
         isolated_flower_seed_super_flower_csv = str(sys.argv[8])
         isolated_flower_seed_flower_csv = str(sys.argv[9])
         all_seed_flower_csv = str(sys.argv[10])
+        _CONVOLVE_KERNEL_SIZE_T = int(sys.argv[11])
+        _CONVOLVE_KERNEL_SIZE_XY = int(sys.argv[12])
+        _CONVOLVE_THRESHOLD = int(sys.argv[13])
         #
         print("sys.argv[1]                           = ", sys.argv[1])
         print("simtelIn                              = ", simtelIn)
