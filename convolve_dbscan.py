@@ -13,6 +13,14 @@ import libGammaStat as gs
 
 # matplotlib.use('TkAgg')  # Use a GUI backend like TkAgg
 
+def parse_folder_name(folder_name):
+    parts = folder_name.split('_')
+    return {
+        'XY': int(parts[0][2:]),  # Extract the number after 'XY'
+        'T': int(parts[1][1:]),   # Extract the number after 'T'
+        'THRES': int(parts[2][5:])  # Extract the number after 'THRES'
+    }
+
 # get a list of folder in the result folder
 folder_list = [f for f in Path('result').iterdir() if f.is_dir()]
 # remove the image folder from the list
@@ -23,17 +31,23 @@ df_dbscan = pd.read_csv('DBSCAN_gamma_corsika_run1.npe.csv')
 # create a folder to store the results
 Path('result/image').mkdir(parents=True, exist_ok=True)
 
-stat_dict = {}
+list_simu = []
 for folder in folder_list:
     folder_name = folder.parts[1]
     df_dbscan_conv = pd.read_csv(folder / 'corsika_run1.npe.csv')
-    stat_dict[folder_name] = gs.GammaStat(df_dbscan_conv, df_dbscan)
-    # create the image of the result for each folder
-    stat_dict[folder_name].plotNumPointsTriggered('result/image/' + folder_name + '_num_points.png')
-    stat_dict[folder_name].plotTimeDistribution('result/image/' + folder_name + '_time_distribution.png')
-    stat_dict[folder_name].plotNPEDistribution('result/image/' + folder_name + '_npe_distribution.png')
-    stat_dict[folder_name].plotEnergyDistribution('result/image/' + folder_name + '_energy_distribution.png')
-    stat_dict[folder_name].plotConfusionMatrix('result/image/' + folder_name + '_confusion_matrix.png')
+    d = parse_folder_name(folder_name)
+    stat = gs.GammaStat(df_dbscan_conv, df_dbscan, d['XY'], d['T'], d['THRES'])
+    # stat.plotNumPointsTriggered('result/image/' + folder_name + '_num_points.png')
+    # stat.plotTimeDistribution('result/image/' + folder_name + '_time_distribution.png')
+    # stat.plotNPEDistribution('result/image/' + folder_name + '_npe_distribution.png')
+    # stat.plotEnergyDistribution('result/image/' + folder_name + '_energy_distribution.png')
+    # stat.plotConfusionMatrix('result/image/' + folder_name + '_confusion_matrix.png')
+    list_simu.append(stat)
+
+# create a general graph
+# gs.plotAccuracy(list_simu, 'result/image/accuracy.png')
+gs.plotAccuracy(list_simu)
+# gs.plotAccuracyPlane(list_simu)
 
 # then create a markdown file with the list of images, organize them by type of plot
 with open('result/image/index.md', 'w') as f:
@@ -64,4 +78,6 @@ with open('result/image/index.md', 'w') as f:
         folder_name = folder.parts[1]
         f.write(f'{folder_name}\n\n')
         f.write(f'![{folder_name}](./{folder_name}_confusion_matrix.png)\n\n')
+    f.write('## Accuracy\n\n')
+    f.write('![Accuracy](./accuracy.png)\n\n')
 print('Done')
