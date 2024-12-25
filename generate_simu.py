@@ -17,9 +17,9 @@ isolated_flower_seed_flower_csv = "isolated_flower_seed_flower.list"
 all_seed_flower_csv = "all_seed_flower.list"
 
 # Define parameter ranges to test
-eps_xy_values = range(1, 4, 1) # 1, 2, 3
-eps_t_values = range(1, 3, 1) # 1, 2
-threshold_values = range(3, 11, 2) # 3, 5, 7, 9
+eps_xy_values = range(1, 5, 1) # 1, 2, 3
+eps_t_values = range(1, 5, 1) # 1, 2
+threshold_values = range(3, 15, 1) # 3, 5, 7, 9
 
 # Base output directory
 base_output_dir = "scratch/simtel_data/gamma_diffuse/"
@@ -33,8 +33,10 @@ for eps_xy in eps_xy_values:
             output_dir = os.path.join(base_output_dir, folder_name)
             # check if the folder exists
             if os.path.exists(output_dir):
-                print(f"Skipping: {folder_name}")
-                continue
+                # the folder exist, check if corsika_run1.npe.csv exist
+                if os.path.exists(os.path.join(output_dir, "corsika_run1.npe.csv")):
+                    # the file exist, skip this iteration
+                    continue
             os.makedirs(output_dir, exist_ok=True)
 
             # Define output files

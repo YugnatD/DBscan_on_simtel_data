@@ -47,7 +47,14 @@ for folder in folder_list:
 # create a general graph
 # gs.plotAccuracy(list_simu, 'result/image/accuracy.png')
 gs.plotAccuracy(list_simu)
+# gs.plotAccuracyMinSamples(list_simu, eps_t=2, eps_xy=2)
 # gs.plotAccuracyPlane(list_simu)
+
+# eps_xy = [stat.eps_xy for stat in list_simu]
+# eps_t = [stat.eps_t for stat in list_simu]
+# # pass over all pair with zip
+# for eps_t, eps_xy in zip(eps_t, eps_xy):
+#     gs.plotAccuracyMinSamples(list_simu, eps_t=eps_t, eps_xy=eps_xy, filename=f'result/image/accuracy_eps_t_{eps_t}_eps_xy_{eps_xy}.png')
 
 # then create a markdown file with the list of images, organize them by type of plot
 with open('result/image/index.md', 'w') as f:

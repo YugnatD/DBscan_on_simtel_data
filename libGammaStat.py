@@ -276,6 +276,33 @@ def plotAccuracyPlane(stat_list, filename=None):
         plt.savefig(filename)
     else:
         plt.show()
+  
+  # plot accuracy in function of min_samples (x = min_samples, y = accuracy) for each pair of eps_xy and eps_t in a 2d plot
+def plotAccuracyMinSamples(stat_list, eps_xy, eps_t, filename=None):
+    # Filter the list of GammaStat objects by eps_xy and eps_t
+    filtered_stats = [stat for stat in stat_list if stat.eps_xy == eps_xy and stat.eps_t == eps_t]
 
+    # Extract data from the filtered GammaStat objects
+    min_samples = [stat.min_samples for stat in filtered_stats]
+    accuracy = [stat.acc for stat in filtered_stats]
+
+    # sort the data based on the order of min_samples
+    min_samples, accuracy = zip(*sorted(zip(min_samples, accuracy)))
+
+    # get he best accuracy
+    best_accuracy = max(accuracy)
+    best_min_samples = min_samples[accuracy.index(best_accuracy)]
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(min_samples, accuracy, marker='o', linestyle='-', color='blue')
+    plt.xlabel('Min Samples')
+    plt.ylabel('Accuracy')
+    plt.title(f'Accuracy vs. Min Samples for eps_xy={eps_xy}, eps_t={eps_t}')
+    plt.legend([f'Best Accuracy: {best_accuracy:.2f} at Min Samples: {best_min_samples}'])
+    plt.grid(True)
+    if filename is not None:
+        plt.savefig(filename)
+    else:
+        plt.show()
 
     
