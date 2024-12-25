@@ -81,83 +81,6 @@ class GammaFile:
                                                                        number_of_wf_time_samples=_n_of_time_sample)
     self.L3_trigger_DBSCAN_pixel_cluster_list_all_extended=self.extend_channel_list( channel_list=self.L3_trigger_DBSCAN_pixel_cluster_list_all,
                                                                            number_of_wf_time_samples=_n_of_time_sample)
-    # self.event_iso_list = []
-    # self.event_full_list = []
-    # for ev in self.sf:
-    #   LSTID=ev['telescope_events'].keys()
-    #   wf_list = []
-    #   n_pe_per_tel_list=[]
-    #   LSTID_list=[]
-    #   L1_trigger_info_LST1=None
-    #   L1_trigger_info_LST2=None
-    #   L1_trigger_info_LST3=None
-    #   L1_trigger_info_LST4=None
-    #   DBSCAN_clusters_info_LST1=None
-    #   DBSCAN_clusters_info_LST2=None
-    #   DBSCAN_clusters_info_LST3=None
-    #   DBSCAN_clusters_info_LST4=None
-    #   DBSCAN_clusters_info_isolated_LST1=None
-    #   DBSCAN_clusters_info_isolated_LST2=None
-    #   DBSCAN_clusters_info_isolated_LST3=None
-    #   DBSCAN_clusters_info_isolated_LST4=None
-    #   #
-    #   mask_cl_LST1=None
-    #   mask_cl_LST2=None
-    #   mask_cl_LST3=None
-    #   mask_cl_LST4=None
-    #   #
-    #   #
-    #   ev_time=[0,0,0,0]
-    #   nphotons=[0,0,0,0]
-    #   n_pe=[0,0,0,0]
-    #   n_pixels=[0,0,0,0]
-
-    #   for i in LSTID:
-    #     print("i: ", i)
-    #     wf_list.append(ev['telescope_events'][i]['adc_samples'][0])
-    #     n_pe_per_tel_list.append(int(ev['photoelectrons'][i-1]['n_pe']))
-    #     LSTID_list.append(int(i-1))
-    #     #
-    #     #
-    #     ev_time[(i-1)] = float(ev['telescope_events'][i]['header']['readout_time'])
-    #     nphotons[(i-1)]=int(len(ev['photons'][(i-1)]))
-    #     n_pe[(i-1)]=int(ev['photoelectrons'][(i-1)]['n_pe'])
-    #     n_pixels[(i-1)]=int(ev['photoelectrons'][(i-1)]['n_pixels']-np.sum(ev['photoelectrons'][(i-1)]['photoelectrons']==0))
-
-    #   for i in np.arange(0,len(n_pe)) :
-    #     if (n_pe[i] == 0 and i == 0) :
-    #         L1_trigger_info_LST1 = self.def_L1_trigger_info()
-    #         DBSCAN_clusters_info_isolated_LST1 = self.def_clusters_info()
-    #         DBSCAN_clusters_info_LST1 = self.def_clusters_info()
-    #         mask_cl_LST1=np.zeros(self.pixel_mapping.shape[0],dtype=int)
-    #     elif (n_pe[i] == 0 and i == 1) :
-    #         L1_trigger_info_LST2 = self.def_L1_trigger_info()
-    #         DBSCAN_clusters_info_isolated_LST2 = self.def_clusters_info()
-    #         DBSCAN_clusters_info_LST2 = self.def_clusters_info()
-    #         mask_cl_LST2=np.zeros(self.pixel_mapping.shape[0],dtype=int)
-    #     elif (n_pe[i] == 0 and i == 2) :
-    #         L1_trigger_info_LST3 = self.def_L1_trigger_info()
-    #         DBSCAN_clusters_info_isolated_LST3 = self.def_clusters_info()
-    #         DBSCAN_clusters_info_LST3 = self.def_clusters_info()
-    #         mask_cl_LST3=np.zeros(self.pixel_mapping.shape[0],dtype=int)
-    #     elif (n_pe[i] == 0 and i == 3) :
-    #         L1_trigger_info_LST4 = self.def_L1_trigger_info()
-    #         DBSCAN_clusters_info_isolated_LST4 = self.def_clusters_info()
-    #         DBSCAN_clusters_info_LST4 = self.def_clusters_info()                
-    #         mask_cl_LST4=np.zeros(self.pixel_mapping.shape[0],dtype=int)
-    #   for wf, npe, lst_id in zip( wf_list, n_pe_per_tel_list, LSTID_list) :
-    #     L1_digitalsum = self.digital_sum(wf=wf, digi_sum_channel_list=self.L1_trigger_pixel_cluster_list)
-    #     L3_digitalsum = self.digital_sum(wf=wf, digi_sum_channel_list=self.L3_trigger_DBSCAN_pixel_cluster_list)
-    #     L3_digitalsum_all = self.digital_sum(wf=wf, digi_sum_channel_list=self.L3_trigger_DBSCAN_pixel_cluster_list_all)
-    #     L1_trigger_info = self.get_L1_trigger_info(digitalsum=L1_digitalsum, pixel_mapping=self.pixel_mapping, digi_sum_channel_list=self.L1_trigger_pixel_cluster_list)
-    #     X_iso = L3_digitalsum>_DBSCAN_digitalsum_threshold_isolated
-    #     X_iso = X_iso.astype(float)
-    #     X_full = L3_digitalsum_all>_DBSCAN_digitalsum_threshold
-    #     X_full = X_full.astype(float)
-    
-
-  # def get_event(self, event_id):
-  #   return self.event_iso_list[event_id], self.event_full_list[event_id]
   
   # def get_num_events(self):
   #    return len(self.event_iso_list)
@@ -278,6 +201,7 @@ class GammaFile:
   def load_arc_points_from_csv(sefl, filename):
     arc_points_shrink = []
     arc_points = []
+    xy_points = []
     with open(filename, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -289,19 +213,26 @@ class GammaFile:
             r = int(row['shrinked_r'])
             c = int(row['shrinked_c'])
             arc_points_shrink.append((a, r, c))
-    return arc_points_shrink, arc_points
+            x = float(row['full_x_position'])
+            y = float(row['full_y_position'])
+            xy_points.append((x, y))
+    return arc_points_shrink, arc_points, xy_points
   
-#   pixel_number,pixel_type,x_position,y_position,module_number,board_number,channel_number,board_id_number,pixel_on,relative_qe,a,r,c
+# pixel_number,pixel_type,x_position,y_position,module_number,board_number,channel_number,board_id_number,pixel_on,relative_qe,a,r,c
 # 0,1,0.0,0.0,0,0,0,0x0,1,1.0,0,29,48
 # 1,1,2.43,0.0,0,1,0,0x0,1,1.0,0,29,49
 # 2,1,1.215,2.104,0,2,0,0x0,1,1.0,1,28,49
   def load_arc_point_from_csv_full(self, filename):
     arc_points = []
+    xy_positions = []
     with open(filename, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             a = int(row['a'])
             r = int(row['r'])
             c = int(row['c'])
+            x = float(row['x_position'])
+            y = float(row['y_position'])
             arc_points.append((a, r, c))
-    return arc_points
+            xy_positions.append((x, y))
+    return arc_points, xy_positions

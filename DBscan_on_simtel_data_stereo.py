@@ -64,10 +64,9 @@ _CONVOLVE_THRESHOLD=5
 # will be set in before the evtloop
 arc_points_shrink = None
 arc_points = None
+xy_points = None
 max_r = 0
 max_c = 0
-cpt_debug_shrink = 0
-cpt_debug_full = 0
 
 neighbors_xy = None
 
@@ -90,6 +89,7 @@ def print_setup():
 def load_arc_points_from_csv(filename):
     arc_points_shrink = []
     arc_points = []
+    xy_points = []
     with open(filename, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -101,7 +101,10 @@ def load_arc_points_from_csv(filename):
             r = int(row['shrinked_r'])
             c = int(row['shrinked_c'])
             arc_points_shrink.append((a, r, c))
-    return arc_points_shrink, arc_points
+            x = float(row['full_x_position'])
+            y = float(row['full_y_position'])
+            xy_points.append((x, y))
+    return arc_points_shrink, arc_points, xy_points
 
 def load_epsilon_neighbors_from_csv(eps):
     csv_file = 'camera_file/CTA_LST_Pixels_info_epsilon_' + str(eps) + '.csv'
@@ -142,10 +145,9 @@ def extend_pixel_mapping( pixel_mapping, channel_list, number_of_wf_time_samples
 def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, channel_list_extended, time_norm, digitalsum_threshold, DBSCAN_eps, DBSCAN_min_samples):
     global arc_points
     global arc_points_shrink
+    global xy_points
     global max_r
     global max_c
-    global cpt_debug_shrink
-    global cpt_debug_full
     global neighbors_xy
 
     # print("")
@@ -158,24 +160,20 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
     # if digitalsum.shape is (1141, 75)
     # if False:
     if digitalsum.shape[0] == 1141 and digitalsum.shape[1] == 75:
-        cpt_debug_shrink += 1
-        # start_time = time.time()
-        temporal_values = (pixel_mapping_extended[:, :, 2] * time_norm)[0]
         X = digitalsum>digitalsum_threshold
         X = X.astype(float)
-
         data_out = tm_ctao_cpp.dbscan_convolve_mt(X, neighbors_xy, _CONVOLVE_KERNEL_SIZE_T, _CONVOLVE_THRESHOLD, 24)
         data_cube = Datacube(max_r, max_c, data_out, arc_points_shrink)
-        points_converted = data_cube.get_points_xyt_above_threshold_centered(0.9, temporal_values, arc_points_shrink, arc_points)
-
+        temporal_values = np.arange(0, X.shape[1])
+        points_converted = data_cube.get_points_xyt_above_threshold_centered(0.9, temporal_values, arc_points_shrink, xy_points)
         clusters_info['n_digitalsum_points'] = len(X)
         if (len(points_converted) > 0):
             clustersID = [0] # id of all the clusters that exist
             clustersIDmax = 0 # id of the cluster with the most points
             clusters_info['n_clusters'] = 1
             clusters_info['n_points'] = len(points_converted)
-            clusters_info['x_mean'] = np.mean([point[0] for point in points_converted])
-            clusters_info['y_mean'] = np.mean([point[1] for point in points_converted])
+            clusters_info['x_mean'] = np.mean([point[0] for point in points_converted]) / 100.0 # convert to meters
+            clusters_info['y_mean'] = np.mean([point[1] for point in points_converted]) / 100.0 # convert to meters
             clusters_info['t_mean'] = np.mean([point[2] for point in points_converted])
             clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
             clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
@@ -201,15 +199,6 @@ def get_DBSCAN_clusters( digitalsum, pixel_mapping, pixel_mapping_extended, chan
             clusters_info['x_mean'] = np.mean(X[clusters==clustersIDmax][:,0])
             clusters_info['y_mean'] = np.mean(X[clusters==clustersIDmax][:,1])
             clusters_info['t_mean'] = np.mean(X[clusters==clustersIDmax][:,2])
-            if cpt_debug_full == 2:
-                print("cpt_debug_full = ", cpt_debug_full)
-                print("clustersID = ", clustersID)
-                print("clustersIDmax = ", clustersIDmax)
-                print("clusters_info['n_clusters'] = ", clusters_info['n_clusters'])
-                print("clusters_info['n_points'] = ", clusters_info['n_points'])
-                print("clusters_info['x_mean'] = ", clusters_info['x_mean'])
-                print("clusters_info['y_mean'] = ", clusters_info['y_mean'])
-                print("clusters_info['t_mean'] = ", clusters_info['t_mean'])
             #
             clusters_info['channelID'] = get_channelID_from_x_y( pixel_mapping=pixel_mapping, x_val=clusters_info['x_mean'], y_val=clusters_info['y_mean'])
             clusters_info['timeID'] = get_timeID( number_of_time_points=digitalsum.shape[1], time_norm=time_norm, t_val=clusters_info['t_mean'])
@@ -574,10 +563,11 @@ def evtloop(datafilein, h5dl1In, nevmax, pixel_mapping, L1_trigger_pixel_cluster
     # init the HECS for the "dbscan"
     global arc_points
     global arc_points_shrink
+    global xy_points
     global max_r
     global max_c
     global neighbors_xy
-    arc_points_shrink, arc_points = load_arc_points_from_csv("camera_file/CTA_LST_Pixels_info_shrink.csv")
+    arc_points_shrink, arc_points, xy_points = load_arc_points_from_csv("camera_file/CTA_LST_Pixels_info_shrink.csv")
     neighbors_xy = load_epsilon_neighbors_from_csv(_CONVOLVE_KERNEL_SIZE_XY)
     max_r = max([r for (a, r, c) in arc_points_shrink]) + 1
     max_c = max([c for (a, r, c) in arc_points_shrink]) + 1
