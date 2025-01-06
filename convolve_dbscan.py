@@ -39,22 +39,30 @@ for folder in folder_list:
     stat = gs.GammaStat(df_dbscan_conv, df_dbscan, d['XY'], d['T'], d['THRES'])
     # stat.plotNumPointsTriggered('result/image/' + folder_name + '_num_points.png')
     # stat.plotTimeDistribution('result/image/' + folder_name + '_time_distribution.png')
+    # stat.plotXDistribution('result/image/' + folder_name + '_x_distribution.png')
+    # stat.plotYDistribution('result/image/' + folder_name + '_y_distribution.png')
     # stat.plotNPEDistribution('result/image/' + folder_name + '_npe_distribution.png')
     # stat.plotEnergyDistribution('result/image/' + folder_name + '_energy_distribution.png')
-    # stat.plotConfusionMatrix('result/image/' + folder_name + '_confusion_matrix.png')
+    # stat.plotConfusionMatrixConvo('result/image/' + folder_name + '_confusion_matrix.png')
+    # range_npe = (0, 300)
+    # stat.plotNPEDistributionRange('result/image/' + folder_name + '_npe_distribution_range.png', range_npe)
     list_simu.append(stat)
+
+# plot the confusion of the dbscan
+list_simu[0].plotConfusionMatrixDBSCAN('result/image/confusion_matrix.png')
 
 # create a general graph
 # gs.plotAccuracy(list_simu, 'result/image/accuracy.png')
 gs.plotAccuracy(list_simu)
+gs.plotEfficiency(list_simu)
 # gs.plotAccuracyMinSamples(list_simu, eps_t=2, eps_xy=2)
 # gs.plotAccuracyPlane(list_simu)
 
-# eps_xy = [stat.eps_xy for stat in list_simu]
-# eps_t = [stat.eps_t for stat in list_simu]
-# # pass over all pair with zip
-# for eps_t, eps_xy in zip(eps_t, eps_xy):
-#     gs.plotAccuracyMinSamples(list_simu, eps_t=eps_t, eps_xy=eps_xy, filename=f'result/image/accuracy_eps_t_{eps_t}_eps_xy_{eps_xy}.png')
+eps_xy = [stat.eps_xy for stat in list_simu]
+eps_t = [stat.eps_t for stat in list_simu]
+# pass over all pair with zip
+for eps_t, eps_xy in zip(eps_t, eps_xy):
+    gs.plotAccuracyMinSamples(list_simu, eps_t=eps_t, eps_xy=eps_xy, filename=f'result/image/accuracy_eps_t_{eps_t}_eps_xy_{eps_xy}.png')
 
 # then create a markdown file with the list of images, organize them by type of plot
 with open('result/image/index.md', 'w') as f:
@@ -70,6 +78,16 @@ with open('result/image/index.md', 'w') as f:
         folder_name = folder.parts[1]
         f.write(f'{folder_name}\n\n')
         f.write(f'![{folder_name}](./{folder_name}_time_distribution.png)\n\n')
+    f.write('## X distribution\n\n')
+    for folder in folder_list:
+        folder_name = folder.parts[1]
+        f.write(f'{folder_name}\n\n')
+        f.write(f'![{folder_name}](./{folder_name}_x_distribution.png)\n\n')
+    f.write('## Y distribution\n\n')
+    for folder in folder_list:
+        folder_name = folder.parts[1]
+        f.write(f'{folder_name}\n\n')
+        f.write(f'![{folder_name}](./{folder_name}_y_distribution.png)\n\n')
     f.write('## NPE distribution\n\n')
     for folder in folder_list:
         folder_name = folder.parts[1]

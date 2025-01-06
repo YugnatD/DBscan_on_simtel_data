@@ -1,0 +1,156 @@
+- type
+- event_id
+- mc_shower
+  - shower
+  - primary_id
+  - energy
+  - azimuth
+  - altitude
+  - depth_start
+  - h_first_int
+  - xmax
+  - hmax
+  - emax
+  - cmax
+  - n_profiles
+  - profiles
+- mc_event
+  - shower_num
+  - xcore
+  - ycore
+  - aweight
+  - event_id
+- telescope_events
+  - 1
+    - pixel_lists
+    - header
+      - loc_count
+      - glob_count
+      - cpu_time
+      - gps_time
+      - trg_source
+      - list_trgsect
+      - time_trgsect
+      - readout_time
+      - relative_trigger_time
+      - telescope_id
+    - adc_samples
+    - pixel_timing
+      - n_pixels
+      - n_gains
+      - before_peak
+      - after_peak
+      - with_sum
+      - list_type
+      - pixel_list
+      - threshold
+      - glob_only_selected
+      - n_types
+      - time_type
+      - time_level
+      - granularity
+      - peak_global
+      - time
+      - pulse_sum_glob
+      - pulse_sum_loc
+- tracking_positions
+  - 1
+    - azimuth_raw
+    - altitude_raw
+    - telescope_id
+- trigger_information
+  - cpu_time
+  - gps_time
+  - trigger_pattern
+  - data_pattern
+  - n_triggered_telescopes
+  - triggered_telescopes
+  - trigger_times
+  - n_telescopes_with_data
+  - telescopes_with_data
+  - teltrg_type_mask
+  - teltrg_time_by_type
+  - plane_wavefront_compensation
+    - az
+    - alt
+    - speed_of_light
+- photons
+  - 0
+- emitter
+- photoelectrons
+  - 0
+    - n_pe
+    - n_pixels
+    - non_empty
+    - photoelectrons
+    - pixel_id
+    - time
+- photoelectron_sums
+  - event
+  - shower_num
+  - n_tel
+  - n_pe
+  - photons
+  - photons_atm
+  - photons_atm_3_6
+  - photons_atm_qe
+  - photons_atm_400
+- camera_monitorings
+  - 1
+    - telescope_id
+    - what
+    - known
+    - new_parts
+    - monitor_id
+    - moni_time
+    - n_sectors
+    - n_gains
+    - n_pixels
+    - n_drawers
+    - status_time
+    - status_bits
+    - trig_time
+    - coinc_count
+    - event_count
+    - trigger_rate
+    - sector_rate
+    - event_rate
+    - data_rate
+    - mean_significant
+    - ped_noise_time
+    - n_ped_slices
+    - pedestal
+    - noise
+    - hv_temp_time
+    - n_drawer_temp
+    - n_camera_temp
+    - hv_v_mon
+    - hv_i_mon
+    - hv_stat
+    - drawer_temp
+    - camera_temp
+    - dc_rate_time
+    - current
+    - scaler
+    - hv_thr_time
+    - hv_dac
+    - thresh_dac
+    - hv_set
+    - trig_set
+    - set_daq_time
+    - daq_conf
+    - daq_scaler_win
+    - daq_nd
+    - daq_acc
+    - daq_nl
+- laser_calibrations
+  - 1
+    - telescope_id
+    - lascal_id
+    - calib
+    - max_int_frac
+    - max_pixtm_frac
+    - tm_calib
+    - flat_fielding
+- pixel_monitorings
+  - 1

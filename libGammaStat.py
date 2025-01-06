@@ -35,41 +35,92 @@ class GammaStat:
     self.df_dbscan_trg_l1_20pe=self.df_dbscan_20pe[self.df_dbscan_20pe['L1_max_digi_sum_LST1']>14963]
     self.df_dbscan_trg_l2_20pe=self.df_dbscan_trg_l1_20pe[self.df_dbscan_trg_l1_20pe['L3_iso_n_points_LST1']>7]
     self.df_conv_trg=self.df_conv[self.df_conv['L3_iso_n_points_LST1']>0]
-    self.df_conv_trg_20pe=self.df_conv_20pe[self.df_conv_20pe['L3_iso_n_points_LST1']>0]
+    self.df_conv_not_trg=self.df_conv[self.df_conv['L3_iso_n_points_LST1']==0]
+
+    # self.df_dbscan_trg = self.df_dbscan[self.df_dbscan['L3_iso_n_points_LST1']>7]
     self.df_dbscan_trg_l2_only=self.df_dbscan[self.df_dbscan['L3_iso_n_points_LST1']>7]
-    self.df_dbscan_trg_cl_only=self.df_dbscan[self.df_dbscan['L3_cl_n_points_LST1']>39]
-    self.df_dbscan_trg_l2_only_20pe=self.df_dbscan_20pe[self.df_dbscan_20pe['L3_iso_n_points_LST1']>7]
-    self.df_dbscan_trg_cl_only_20pe=self.df_dbscan_20pe[self.df_dbscan_20pe['L3_cl_n_points_LST1']>39]
-    true_labels = (self.df_dbscan['L3_iso_n_points_LST1'] > 7).astype(int) 
-    predicted_labels = (self.df_conv['L3_iso_n_points_LST1'] > 7).astype(int)
-    
-    # print(self.df_conv['n_pixels_LST1'])
-    self.cm = confusion_matrix(true_labels, predicted_labels)
-    self.acc = (self.cm[0,0]+self.cm[1,1])/np.sum(self.cm)
-    self.eff = self.cm[1,1]/np.sum(self.cm[1,:])
-    self.pur = self.cm[1,1]/np.sum(self.cm[:,1])
-    self.f1 = 2*self.cm[1,1]/(np.sum(self.cm[:,1])+np.sum(self.cm[1,:]))
+    # self.df_dbscan_trg_cl_only=self.df_dbscan[self.df_dbscan['L3_cl_n_points_LST1']>39]
+    # self.df_dbscan_trg_l2_only_20pe=self.df_dbscan_20pe[self.df_dbscan_20pe['L3_iso_n_points_LST1']>7]
+    # self.df_dbscan_trg_cl_only_20pe=self.df_dbscan_20pe[self.df_dbscan_20pe['L3_cl_n_points_LST1']>39]
+    self.df_dbscan_trg = self.df_dbscan_trg_l2_only
+
+    y_true = df_conv['n_pe_LST1'] >= 50
+    y_pred = df_conv['L3_iso_n_points_LST1']>0
+    self.cm_conv = confusion_matrix(y_true, y_pred)
+    self.acc = (self.cm_conv[0,0]+self.cm_conv[1,1])/np.sum(self.cm_conv)
+    self.eff = self.cm_conv[1,1]/np.sum(self.cm_conv[1,:])
+    self.pur = self.cm_conv[1,1]/np.sum(self.cm_conv[:,1])
+    self.f1 = 2*self.cm_conv[1,1]/(np.sum(self.cm_conv[:,1])+np.sum(self.cm_conv[1,:]))
+
+    # compute the confusion matrix for the dbscan
+    y_true_dbscan = df_dbscan['n_pe_LST1'] >= 50
+    y_pred_dbscan = self.df_dbscan['L3_iso_n_points_LST1']>7
+    self.cm_dbscan = confusion_matrix(y_true_dbscan, y_pred_dbscan)
+    self.acc_dbscan = (self.cm_dbscan[0,0]+self.cm_dbscan[1,1])/np.sum(self.cm_dbscan)
+    self.eff_dbscan = self.cm_dbscan[1,1]/np.sum(self.cm_dbscan[1,:])
+    self.pur_dbscan = self.cm_dbscan[1,1]/np.sum(self.cm_dbscan[:,1])
+    self.f1_dbscan = 2*self.cm_dbscan[1,1]/(np.sum(self.cm_dbscan[:,1])+np.sum(self.cm_dbscan[1,:]))
+
+  # def plotNumPointsTriggered(self, filename=None):
+  #   plt.hist(self.df_conv['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), edgecolor='black', alpha=1.0, label='L3_iso_n_points_LST1')
+  #   plt.hist(self.df_conv_trg['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), edgecolor='black', alpha=0.3, label='L3_iso_n_points_LST1 Triggered')
+  #   plt.hist(self.df_dbscan_trg['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), edgecolor='black', alpha=0.3, label='DBSCAN L3_iso_n_points_LST1 Triggered')
+  #   plt.grid(True)
+  #   plt.yscale('log')
+  #   plt.title('number of points in cluster' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
+  #   plt.xlabel('number of points in cluster')
+  #   plt.ylabel('number of events')
+  #   plt.legend()
+  #   try:
+  #     if filename is not None:
+  #       plt.savefig(filename)
+  #     else:
+  #       plt.show()
+  #   except:
+  #     print('Error in plotNumPointsTriggered')
+  #   plt.close()
 
   def plotNumPointsTriggered(self, filename=None):
-    plt.hist(self.df_conv['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), edgecolor='black', alpha=1.0, label='L3_iso_n_points_LST1')
-    plt.hist(self.df_conv_trg['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), edgecolor='black', alpha=0.3, label='L3_iso_n_points_LST1 Triggered')
-    plt.grid(True)
-    plt.yscale('log')
-    plt.title('number of points in cluster' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
-    plt.xlabel('number of points in cluster')
-    plt.ylabel('number of events')
-    plt.legend()
+    # Create a figure with 2 subplots
+    fig, axes = plt.subplots(2, 1, figsize=(10, 12), constrained_layout=True)
+
+    # First subplot: L3_iso_n_points_LST1 and conv
+    axes[0].hist(self.df_conv['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), 
+                 edgecolor='black', alpha=1.0, label='L3_iso_n_points_LST1')
+    axes[0].hist(self.df_conv_trg['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), 
+                 edgecolor='black', alpha=0.3, label='L3_iso_n_points_LST1 Triggered')
+    axes[0].grid(True)
+    axes[0].set_yscale('log')
+    axes[0].set_title('Number of Points in Cluster (Conv)')
+    axes[0].set_xlabel('Number of Points in Cluster')
+    axes[0].set_ylabel('Number of Events')
+    axes[0].legend()
+
+    # Second subplot: L3_iso_n_points_LST1 and dbscan
+    axes[1].hist(self.df_conv['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), 
+                 edgecolor='black', alpha=1.0, label='L3_iso_n_points_LST1')
+    axes[1].hist(self.df_dbscan_trg['L3_iso_n_points_LST1'].values, bins=np.linspace(0.0, 100, num=100), 
+                 edgecolor='black', alpha=0.3, label='DBSCAN L3_iso_n_points_LST1 Triggered')
+    axes[1].grid(True)
+    axes[1].set_yscale('log')
+    axes[1].set_title('Number of Points in Cluster (DBSCAN)')
+    axes[1].set_xlabel('Number of Points in Cluster')
+    axes[1].set_ylabel('Number of Events')
+    axes[1].legend()
+
+    # Save or show the figure
     try:
-      if filename is not None:
-        plt.savefig(filename)
-      else:
-        plt.show()
-    except:
-      print('Error in plotNumPointsTriggered')
-    plt.close()
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
+    except Exception as e:
+        print(f'Error in saving/plotting: {e}')
+    plt.close(fig)
+
   
   def plotTimeDistribution(self, filename=None):
-    plt.hist(self.df_conv['L3_iso_t_mean_LST1'].values/1.5, bins=np.linspace(0.0, 5.0, num=100), edgecolor='black', alpha=1.0, label='CONVO L3_iso_t_mean_LST1')
+    plt.hist((self.df_conv['L3_iso_t_mean_LST1'].values*0.09)/1.5, bins=np.linspace(0.0, 5.0, num=100), edgecolor='black', alpha=1.0, label='CONVO L3_iso_t_mean_LST1')
     plt.hist(self.df_dbscan['L3_iso_t_mean_LST1'].values/1.5, bins=np.linspace(0.0, 5.0, num=100), edgecolor='black', alpha=0.25, label='DBSCAN L3_iso_t_mean_LST1')
     plt.title('L3_iso_t_mean_LST1' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
     plt.grid(True)
@@ -82,44 +133,238 @@ class GammaStat:
     else:
       plt.show()
     plt.close()
-    
-  def plotNPEDistribution(self, filename=None):
-    plt.hist(self.df_conv['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), edgecolor='black', alpha=1.0, label='all events conv')
-    plt.hist(self.df_conv_trg['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), edgecolor='black', alpha=1.0, label='triggered conv')
-    plt.grid(True)
-    plt.yscale('log')  # Set y-axis to logarithmic scale
-    plt.title('number of photoelectrons' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
-    plt.xlabel('number of photoelectrons')
-    plt.ylabel('number of events')
-    plt.legend()
-    if filename is not None:
-      plt.savefig(filename)
-    else:
-      plt.show()
-    plt.close()
   
-  def plotEnergyDistribution(self, filename=None):
-    hist_energy_conv=plt.hist(self.df_conv['energy'].values, bins=np.logspace(np.log10(0.005),np.log10(50),50), edgecolor='black', alpha=1.0, label='CONVO')
-    hist_energy_conv_trg=plt.hist(self.df_conv_trg['energy'].values, bins=np.logspace(np.log10(0.005),np.log10(50),50), edgecolor='black', alpha=1.0, label='CONVO TRG')
+  # plt L3_iso_x_mean_LST1
+  def plotXDistribution(self, filename=None):
+    plt.hist(self.df_conv['L3_iso_x_mean_LST1'].values, bins=np.linspace(-1.0, 1.0, num=100), edgecolor='black', alpha=1.0, label='CONVO L3_iso_x_mean_LST1')
+    plt.hist(self.df_dbscan['L3_iso_x_mean_LST1'].values, bins=np.linspace(-1.0, 1.0, num=100), edgecolor='black', alpha=0.25, label='DBSCAN L3_iso_x_mean_LST1')
+    plt.title('L3_iso_x_mean_LST1' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
     plt.grid(True)
-    plt.xscale('log')
+    plt.xlabel('L3_iso_x_mean_LST1')
+    plt.ylabel('Number of events')
     plt.yscale('log')
-    plt.xlabel('energy')
     plt.legend()
-    plt.ylabel('number of events')
-    plt.title('Energy distribution' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
     if filename is not None:
       plt.savefig(filename)
     else:
       plt.show()
     plt.close()
   
-  def plotConfusionMatrix(self, filename=None):
+  # plt L3_iso_y_mean_LST1
+  def plotYDistribution(self, filename=None):
+    plt.hist(self.df_conv['L3_iso_y_mean_LST1'].values, bins=np.linspace(-1.0, 1.0, num=100), edgecolor='black', alpha=1.0, label='CONVO L3_iso_y_mean_LST1')
+    plt.hist(self.df_dbscan['L3_iso_y_mean_LST1'].values, bins=np.linspace(-1.0, 1.0, num=100), edgecolor='black', alpha=0.25, label='DBSCAN L3_iso_y_mean_LST1')
+    plt.title('L3_iso_y_mean_LST1' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
+    plt.grid(True)
+    plt.xlabel('L3_iso_y_mean_LST1')
+    plt.ylabel('Number of events')
+    plt.yscale('log')
+    plt.legend()
+    if filename is not None:
+      plt.savefig(filename)
+    else:
+      plt.show()
+    plt.close()
+    
+  # def plotNPEDistribution(self, filename=None):
+  #   plt.hist(self.df_conv['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), edgecolor='black', alpha=1.0, label='all events conv')
+  #   plt.hist(self.df_conv_trg['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), edgecolor='black', alpha=1.0, label='triggered conv')
+  #   plt.hist(self.df_dbscan_trg['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), edgecolor='black', alpha=0.5, label='triggered dbscan')
+  #   plt.grid(True)
+  #   plt.yscale('log')  # Set y-axis to logarithmic scale
+  #   plt.title('number of photoelectrons' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
+  #   plt.xlabel('number of photoelectrons')
+  #   plt.ylabel('number of events')
+  #   plt.legend()
+  #   if filename is not None:
+  #     plt.savefig(filename)
+  #   else:
+  #     plt.show()
+  #   plt.close()
+  
+  def plotNPEDistribution(self, filename=None):
+    # Create a figure with 2 subplots
+    fig, axes = plt.subplots(2, 1, figsize=(10, 12), constrained_layout=True)
+
+    # First subplot: All events and triggered events (conv)
+    axes[0].hist(self.df_conv['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), 
+                 edgecolor='black', alpha=1.0, label='All Events Conv')
+    axes[0].hist(self.df_conv_trg['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), 
+                 edgecolor='black', alpha=1.0, label='Triggered Conv')
+    axes[0].grid(True)
+    axes[0].set_yscale('log')
+    axes[0].set_title('Number of Photoelectrons (Conv)')
+    axes[0].set_xlabel('Number of Photoelectrons')
+    axes[0].set_ylabel('Number of Events')
+    axes[0].legend()
+
+    # Second subplot: All events and triggered events (dbscan)
+    axes[1].hist(self.df_conv['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), 
+                 edgecolor='black', alpha=1.0, label='All Events Conv')
+    axes[1].hist(self.df_dbscan_trg['n_pe_LST1'].values, bins=np.linspace(0.0, 2000, num=100), 
+                 edgecolor='black', alpha=0.5, label='Triggered DBSCAN')
+    axes[1].grid(True)
+    axes[1].set_yscale('log')
+    axes[1].set_title('Number of Photoelectrons (DBSCAN)')
+    axes[1].set_xlabel('Number of Photoelectrons')
+    axes[1].set_ylabel('Number of Events')
+    axes[1].legend()
+
+    # Save or show the figure
+    try:
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
+    except Exception as e:
+        print(f'Error in saving/plotting: {e}')
+    plt.close(fig)
+
+
+  # def plotNPEDistributionRange(self, filename=None, range=(0.0, 2000)):
+  #   # get the npe for the conv trigger between the range
+  #   npe_conv = self.df_conv['n_pe_LST1'].values
+  #   npe_conv = npe_conv[(npe_conv >= range[0]) & (npe_conv <= range[1])]
+  #   # get the npe for the conv not trigger between the range
+  #   npe_conv_trg = self.df_conv_trg['n_pe_LST1'].values
+  #   npe_conv_trg = npe_conv_trg[(npe_conv_trg >= range[0]) & (npe_conv_trg <= range[1])]
+  #   # get the npe for the dbscan between the range
+  #   npe_dbscan_trg = self.df_dbscan_trg['n_pe_LST1'].values
+  #   npe_dbscan_trg = npe_dbscan_trg[(npe_dbscan_trg >= range[0]) & (npe_dbscan_trg <= range[1])]
+  #   # plot the histogram
+  #   plt.hist(npe_conv, bins=np.linspace(range[0], range[1], num=100), edgecolor='black', alpha=1.0, label='all events conv')
+  #   plt.hist(npe_conv_trg, bins=np.linspace(range[0], range[1], num=100), edgecolor='black', alpha=1.0, label='triggered conv')
+  #   plt.hist(npe_dbscan_trg, bins=np.linspace(range[0], range[1], num=100), edgecolor='black', alpha=0.5, label='triggered dbscan')
+  #   plt.grid(True)
+  #   plt.yscale('log')  # Set y-axis to logarithmic scale
+  #   plt.title('number of photoelectrons' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
+  #   plt.xlabel('number of photoelectrons')
+  #   plt.ylabel('number of events')
+  #   plt.legend()
+  #   if filename is not None:
+  #     plt.savefig(filename)
+  #   else:
+  #     plt.show()
+  #   plt.close()
+  
+
+  def plotNPEDistributionRange(self, filename=None, range=(0.0, 2000)):
+    # Filter data within the specified range
+    npe_conv = self.df_conv['n_pe_LST1'].values
+    npe_conv = npe_conv[(npe_conv >= range[0]) & (npe_conv <= range[1])]
+
+    npe_conv_trg = self.df_conv_trg['n_pe_LST1'].values
+    npe_conv_trg = npe_conv_trg[(npe_conv_trg >= range[0]) & (npe_conv_trg <= range[1])]
+
+    npe_dbscan_trg = self.df_dbscan_trg['n_pe_LST1'].values
+    npe_dbscan_trg = npe_dbscan_trg[(npe_dbscan_trg >= range[0]) & (npe_dbscan_trg <= range[1])]
+
+    # Create a figure with 2 subplots
+    fig, axes = plt.subplots(2, 1, figsize=(10, 12), constrained_layout=True)
+
+    # First subplot: All events and triggered events (conv)
+    axes[0].hist(npe_conv, bins=np.linspace(range[0], range[1], num=100), 
+                 edgecolor='black', alpha=1.0, label='All Events Conv')
+    axes[0].hist(npe_conv_trg, bins=np.linspace(range[0], range[1], num=100), 
+                 edgecolor='black', alpha=1.0, label='Triggered Conv')
+    axes[0].grid(True)
+    axes[0].set_yscale('log')
+    axes[0].set_title('Number of Photoelectrons (Conv)')
+    axes[0].set_xlabel('Number of Photoelectrons')
+    axes[0].set_ylabel('Number of Events')
+    axes[0].legend()
+
+    # Second subplot: All events and triggered events (dbscan)
+    axes[1].hist(npe_conv, bins=np.linspace(range[0], range[1], num=100), 
+                 edgecolor='black', alpha=1.0, label='All Events Conv')
+    axes[1].hist(npe_dbscan_trg, bins=np.linspace(range[0], range[1], num=100), 
+                 edgecolor='black', alpha=0.5, label='Triggered DBSCAN')
+    axes[1].grid(True)
+    axes[1].set_yscale('log')
+    axes[1].set_title('Number of Photoelectrons (DBSCAN)')
+    axes[1].set_xlabel('Number of Photoelectrons')
+    axes[1].set_ylabel('Number of Events')
+    axes[1].legend()
+
+    # Save or show the figure
+    try:
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
+    except Exception as e:
+        print(f'Error in saving/plotting: {e}')
+    plt.close(fig)
+
+
+  # def plotEnergyDistribution(self, filename=None):
+  #   hist_energy_conv=plt.hist(self.df_conv['energy'].values, bins=np.logspace(np.log10(0.005),np.log10(50),50), edgecolor='black', alpha=1.0, label='CONVO')
+  #   hist_energy_conv_trg=plt.hist(self.df_conv_trg['energy'].values, bins=np.logspace(np.log10(0.005),np.log10(50),50), edgecolor='black', alpha=1.0, label='CONVO TRG')
+  #   hist_energy_dbscan_trg=plt.hist(self.df_dbscan_trg['energy'].values, bins=np.logspace(np.log10(0.005),np.log10(50),50), edgecolor='black', alpha=0.5, label='DBSCAN TRG')
+  #   plt.grid(True)
+  #   plt.xscale('log')
+  #   plt.yscale('log')
+  #   plt.xlabel('energy')
+  #   plt.legend()
+  #   plt.ylabel('number of events')
+  #   plt.title('Energy distribution' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
+  #   if filename is not None:
+  #     plt.savefig(filename)
+  #   else:
+  #     plt.show()
+  #   plt.close()
+
+  def plotEnergyDistribution(self, filename=None):
+    # Create a figure with 2 subplots
+    fig, axes = plt.subplots(2, 1, figsize=(10, 12), constrained_layout=True)
+
+    # Energy bins for histograms
+    energy_bins = np.logspace(np.log10(0.005), np.log10(50), 50)
+
+    # First subplot: CONVO and CONVO TRG
+    axes[0].hist(self.df_conv['energy'].values, bins=energy_bins, 
+                 edgecolor='black', alpha=1.0, label='CONVO')
+    axes[0].hist(self.df_conv_trg['energy'].values, bins=energy_bins, 
+                 edgecolor='black', alpha=1.0, label='CONVO TRG')
+    axes[0].grid(True)
+    axes[0].set_xscale('log')
+    axes[0].set_yscale('log')
+    axes[0].set_xlabel('Energy')
+    axes[0].set_ylabel('Number of Events')
+    axes[0].set_title('Energy Distribution (CONVO)')
+    axes[0].legend()
+
+    # Second subplot: CONVO and DBSCAN TRG
+    axes[1].hist(self.df_conv['energy'].values, bins=energy_bins, 
+                 edgecolor='black', alpha=1.0, label='CONVO')
+    axes[1].hist(self.df_dbscan_trg['energy'].values, bins=energy_bins, 
+                 edgecolor='black', alpha=0.5, label='DBSCAN TRG')
+    axes[1].grid(True)
+    axes[1].set_xscale('log')
+    axes[1].set_yscale('log')
+    axes[1].set_xlabel('Energy')
+    axes[1].set_ylabel('Number of Events')
+    axes[1].set_title('Energy Distribution (DBSCAN)')
+    axes[1].legend()
+
+    # Save or show the figure
+    try:
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
+    except Exception as e:
+        print(f'Error in saving/plotting: {e}')
+    plt.close(fig)
+
+  
+  def plotConfusionMatrixConvo(self, filename=None):
     # add a legend
     plt.text(0.5, 0.5, f'Accuracy: {self.acc:.2f}\nEfficiency: {self.eff:.2f}\nPurity: {self.pur:.2f}\nF1: {self.f1:.2f}', horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes )
 
     # Display confusion matrix
-    disp = ConfusionMatrixDisplay(confusion_matrix=self.cm, display_labels=["Class 0", "Class 1"])
+    # 0 = Not triggered, 1 = Triggered
+    disp = ConfusionMatrixDisplay(confusion_matrix=self.cm_conv, display_labels=["Not Triggered", "Triggered"])
     # disp.plot(cmap="viridis")
     disp.plot(include_values=True, cmap='viridis', ax=plt.gca())
     plt.title('Confusion matrix' + f' eps_xy={self.eps_xy} eps_t={self.eps_t} min_samples={self.min_samples}')
@@ -128,6 +373,24 @@ class GammaStat:
     else:
       plt.show()
     plt.close()
+  
+  #####################################################################################################################################
+  # plotting for the dbscan
+  
+  def plotConfusionMatrixDBSCAN(self, filename=None):
+    # add a legend
+    plt.text(0.5, 0.5, f'Accuracy: {self.acc_dbscan:.2f}\nEfficiency: {self.eff_dbscan:.2f}\nPurity: {self.pur_dbscan:.2f}\nF1: {self.f1_dbscan:.2f}', horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes )
+    # Display confusion matrix
+    disp = ConfusionMatrixDisplay(confusion_matrix=self.cm_dbscan, display_labels=["Not Triggered", "Triggered"])
+    # disp.plot(cmap="viridis")
+    disp.plot(include_values=True, cmap='viridis', ax=plt.gca())
+    plt.title('Confusion matrix DBSCAN')
+    if filename is not None:
+      plt.savefig(filename)
+    else:
+      plt.show()
+    plt.close()
+  
 
 # Define a plane fitting function: Z = a*X + b*Y + c
 def plane(XY, a, b, c):
@@ -198,6 +461,47 @@ def plotAccuracy(stat_list, filename=None):
         plt.savefig(filename)
     else:
         plt.show()
+  
+  # plot the efficiency
+def plotEfficiency(stat_list, filename=None):
+    eps_xy = [stat.eps_xy for stat in stat_list]
+    eps_t = [stat.eps_t for stat in stat_list]
+    min_samples = [stat.min_samples for stat in stat_list]
+    efficiency = [stat.eff for stat in stat_list]  # Assuming `eff` is computed in GammaStat
+
+    # Find the index of the maximum accuracy
+    max_acc_index = efficiency.index(max(efficiency))
+    best_eps_xy = eps_xy[max_acc_index]
+    best_eps_t = eps_t[max_acc_index]
+    best_min_samples = min_samples[max_acc_index]
+    best_efficiency = efficiency[max_acc_index]
+
+    # 3D Scatter Plot
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    scatter = ax.scatter(eps_xy, eps_t, min_samples, c=efficiency, cmap='viridis', s=100)
+    ax.set_xlabel('Epsilon XY')
+    ax.set_ylabel('Epsilon T')
+    ax.set_zlabel('Min Samples')
+
+    # Add annotation for the point with the best accuracy
+    ax.text(best_eps_xy, best_eps_t, best_min_samples, 
+            f'Best: {best_efficiency:.2f}', 
+            color='red', fontsize=10)
+
+    # Set grid to be on range for each axis
+    ax.set_xticks(sorted(set(eps_xy)))
+    ax.set_yticks(sorted(set(eps_t)))
+    ax.set_zticks(sorted(set(min_samples)))
+
+    fig.colorbar(scatter, label='Accuracy')
+    plt.title("F(eps_xy, eps_t, min_samples) = Accuracy")
+    
+    if filename is not None:
+        plt.savefig(filename)
+    else:
+        plt.show()
+
 
 def plotAccuracyPlane(stat_list, filename=None):
     # Extract data from GammaStat objects

@@ -92,9 +92,13 @@ class GammaFile:
                 continue
 
             if lst_id not in LSTID:
-                print("lst_id not in ev['telescope_events']")
                 return None
-
+            
+            # if 'image_parameters' not in ev["telescope_events"][lst_id]:
+            #     event_truth = None
+            # else:
+            #    event_truth = ev["telescope_events"][1]["image_parameters"]
+                        
             # Extract waveform and metadata for the specified LST ID
             wf = ev['telescope_events'][lst_id]['adc_samples'][0]
             n_pe = int(ev['photoelectrons'][lst_id - 1]['n_pe'])
@@ -120,10 +124,17 @@ class GammaFile:
                 "L3_digitalsum": L3_digitalsum,
                 "L3_digitalsum_all": L3_digitalsum_all,
                 "X_iso": X_iso,
-                "X_full": X_full
+                "X_full": X_full,
             }
 
     return None
+
+  def print_dict_keys(self, d, level=0):
+    indent = "  " * level  # Create an indent based on the current tree level
+    for key, value in d.items():
+        print(f"{indent}- {key}")
+        if isinstance(value, dict):  # Check if the value is a dictionary
+            self.print_dict_keys(value, level + 1)  # Recursive call for nested dictionaries
 
   def def_L1_trigger_info(self, max_digi_sum=0,
                          x_mean=-999.0, y_mean=-999.0, t_mean=-999.0,

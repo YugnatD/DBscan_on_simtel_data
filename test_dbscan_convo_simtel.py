@@ -45,29 +45,24 @@ max_c_full = max([c for (a, r, c) in arc_points]) + 1
 for i in range(1000):
     event = data.get_event(lst_id=1, event_number=i)
 
+    # if event["event_truth"] is None:
+    #     continue
+
+    # if event["event_truth"] is not None:
+    #     continue
     
-    # print(event)
     n_pe = event["n_pe"]
     n_pixels = event["n_pixels"]
-    x_mean = event["L1_trigger_info"]["x_mean"]
-    y_mean = event["L1_trigger_info"]["y_mean"]
-    t_mean = event["L1_trigger_info"]["t_mean"]
-    if n_pe < 250:
-        continue
+    print("n_pe: ", n_pe)
+    print("n_pixels: ", n_pixels)
+    # print("telscope id ", event["event_truth"]["telescope_id"])
+    # print(event["event_truth"])
     iso_0 = event["X_iso"] # 1141x75 datacube
     full_0 = event["X_full"] # 7639x75 datacube
     wf0 = event["wf"] # full 7987x75 datacube
     wf0 = wf0 / np.max(wf0)
     L3_digitalsum = event["L3_digitalsum"]
     L3_digitalsum_all = event["L3_digitalsum_all"]
-
-    print("Event INFO")
-    print("Event: ", i)
-    print("n_pe: ", n_pe)
-    print("n_pixels: ", n_pixels)
-    print("x_mean: ", x_mean)
-    print("y_mean: ", y_mean)
-    print("t_mean: ", t_mean)
 
     # apply DBSCAN
     X = data.pixel_mapping_extended_all[L3_digitalsum_all>libGammaFile._DBSCAN_digitalsum_threshold]
@@ -138,16 +133,16 @@ for i in range(1000):
     input("Press Enter to close...")
     datacube_cpp_full.close_plot()
 
-    data_cube_cpp = Datacube(max_r_iso, max_c_iso, iso_0, arc_points_shrink)
-    data_cube_cpp.refresh_plot()
-    data_cube_cpp.plot(600, 600, 10, 35)
-    input("Press Enter to close...")
-    data_cube_cpp.close_plot()
+    # data_cube_cpp = Datacube(max_r_iso, max_c_iso, iso_0, arc_points_shrink)
+    # data_cube_cpp.refresh_plot()
+    # data_cube_cpp.plot(600, 600, 10, 35)
+    # input("Press Enter to close...")
+    # data_cube_cpp.close_plot()
 
     
-    data_cube_out.refresh_plot()
-    data_cube_out.plot(600, 600, 10, 35)
-    input("Press Enter to close...")
-    data_cube_out.close_plot()
+    # data_cube_out.refresh_plot()
+    # data_cube_out.plot(600, 600, 10, 35)
+    # input("Press Enter to close...")
+    # data_cube_out.close_plot()
 
     
